@@ -8,22 +8,25 @@ public abstract class AbsSynchronizedLyrics extends Lyrics {
     protected final SparseArray<String> lines = new SparseArray<>();
     protected int offset = 0;
 
-    public String getLine(int time) {
+    public String[] getLine(int time) {
         time += offset + AbsSynchronizedLyrics.TIME_OFFSET_MS;
 
         int lastLineTime = lines.keyAt(0);
+
+        int nextIndex = 0;
 
         for (int i = 0; i < lines.size(); i++) {
             int lineTime = lines.keyAt(i);
 
             if (time >= lineTime) {
                 lastLineTime = lineTime;
+                nextIndex++;
             } else {
                 break;
             }
         }
 
-        return lines.get(lastLineTime);
+        return new String[]{lines.get(lastLineTime), lines.valueAt(nextIndex)};
     }
 
     public boolean isSynchronized() {

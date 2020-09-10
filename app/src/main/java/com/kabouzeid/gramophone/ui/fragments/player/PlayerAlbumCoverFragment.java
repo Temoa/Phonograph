@@ -2,8 +2,6 @@ package com.kabouzeid.gramophone.ui.fragments.player;
 
 import android.animation.Animator;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.viewpager.widget.ViewPager;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -14,6 +12,9 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.viewpager.widget.ViewPager;
 
 import com.kabouzeid.gramophone.R;
 import com.kabouzeid.gramophone.adapter.AlbumCoverPagerAdapter;
@@ -50,6 +51,8 @@ public class PlayerAlbumCoverFragment extends AbsMusicServiceFragment implements
     TextView lyricsLine1;
     @BindView(R.id.player_lyrics_line2)
     TextView lyricsLine2;
+    @BindView(R.id.player_lyrics_line3)
+    TextView lyricsLine3;
 
     private Callbacks callbacks;
     private int currentPosition;
@@ -86,7 +89,18 @@ public class PlayerAlbumCoverFragment extends AbsMusicServiceFragment implements
             }
         });
         progressViewUpdateHelper = new MusicProgressViewUpdateHelper(this, 500, 1000);
-        progressViewUpdateHelper.start();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (MusicPlayerRemote.isPlaying()) progressViewUpdateHelper.start();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        progressViewUpdateHelper.stop();
     }
 
     @Override
@@ -110,6 +124,17 @@ public class PlayerAlbumCoverFragment extends AbsMusicServiceFragment implements
     @Override
     public void onQueueChanged() {
         updatePlayingQueue();
+    }
+
+    @Override
+    public void onPlayStateChanged() {
+        if (progressViewUpdateHelper == null) return;
+        boolean isPlaying = MusicPlayerRemote.isPlaying();
+        if (isPlaying) {
+            progressViewUpdateHelper.start();
+        } else {
+            progressViewUpdateHelper.stop();
+        }
     }
 
     private void updatePlayingQueue() {
@@ -181,7 +206,7 @@ public class PlayerAlbumCoverFragment extends AbsMusicServiceFragment implements
     }
 
     private boolean isLyricsLayoutBound() {
-        return lyricsLayout != null && lyricsLine1 != null && lyricsLine2 != null;
+        return lyricsLayout != null && lyricsLine1 != null && lyricsLine2 != null && lyricsLine3 != null;
     }
 
     private void hideLyricsLayout() {
@@ -190,6 +215,7 @@ public class PlayerAlbumCoverFragment extends AbsMusicServiceFragment implements
             lyricsLayout.setVisibility(View.GONE);
             lyricsLine1.setText(null);
             lyricsLine2.setText(null);
+            lyricsLine3.setText(null);
         });
     }
 
@@ -205,6 +231,7 @@ public class PlayerAlbumCoverFragment extends AbsMusicServiceFragment implements
 
         lyricsLine1.setText(null);
         lyricsLine2.setText(null);
+        lyricsLine3.setText(null);
 
         lyricsLayout.setVisibility(View.VISIBLE);
         lyricsLayout.animate().alpha(1f).setDuration(PlayerAlbumCoverFragment.VISIBILITY_ANIM_DURATION);
@@ -234,7 +261,9 @@ public class PlayerAlbumCoverFragment extends AbsMusicServiceFragment implements
         lyricsLayout.setAlpha(1f);
 
         String oldLine = lyricsLine2.getText().toString();
-        String line = synchronizedLyrics.getLine(progress);
+        String[] s = synchronizedLyrics.getLine(progress);
+        String line = s[0];
+        String nextLine = s[1];
 
         if (!oldLine.equals(line) || oldLine.isEmpty()) {
             lyricsLine1.setText(oldLine);
@@ -253,6 +282,17 @@ public class PlayerAlbumCoverFragment extends AbsMusicServiceFragment implements
             lyricsLine2.setAlpha(0f);
             lyricsLine2.setTranslationY(h);
             lyricsLine2.animate().alpha(1f).translationY(0f).setDuration(PlayerAlbumCoverFragment.VISIBILITY_ANIM_DURATION);
+
+            String oldNextLine = lyricsLine3.getText().toString();
+            if (!oldNextLine.equals(nextLine) || oldNextLine.isEmpty()) {
+                lyricsLine3.setText(nextLine);
+                lyricsLine3.setVisibility(View.VISIBLE);
+                lyricsLine3.measure(View.MeasureSpec.makeMeasureSpec(lyricsLine3.getMeasuredWidth(), View.MeasureSpec.EXACTLY), View.MeasureSpec.UNSPECIFIED);
+                int h1 = lyricsLine3.getMeasuredHeight();
+                lyricsLine3.setAlpha(0f);
+                lyricsLine3.setTranslationY(h1);
+                lyricsLine3.animate().alpha(1f).translationY(0f).setDuration(PlayerAlbumCoverFragment.VISIBILITY_ANIM_DURATION);
+            }
         }
     }
 
