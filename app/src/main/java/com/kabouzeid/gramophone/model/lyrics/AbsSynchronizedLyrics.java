@@ -26,7 +26,7 @@ public abstract class AbsSynchronizedLyrics extends Lyrics {
             }
         }
 
-        return new String[]{lines.get(lastLineTime), lines.valueAt(nextIndex)};
+        return new String[]{lines.get(lastLineTime), nextIndex < lines.size() ? lines.valueAt(nextIndex) : null};
     }
 
     public boolean isSynchronized() {
